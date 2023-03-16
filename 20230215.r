@@ -71,34 +71,44 @@ INFO=function(){
   pos=readRDS("Pos20WithDublicate")
   ctch=read.csv("tblsIN/catch_2000_2010_fishSqu.csv")
   ctch$VesDate=ctch$Ves_Date
- Ctchves=unique(ctch$ves)
- posC= pos [pos$id_ves %in% Ctchves,]
+  Ctchves=unique(ctch$ves)
+  posC= pos [pos$id_ves %in% Ctchves,]
  
-   siteFlt=  c("KEKURNY CAPE","SHIPUNSKY CAPE","ZHELEZNAYA BAY","KOZLOV CAPE")
-   
-   
- #  tmp=data.frame(posC[posC$site %in% siteFlt,]) 
- # tmp %>% group_by(VesDate,site)  %>% summarise(n=n()) %>% group_by(site)%>%summarise(n=n())
- 
- #  VesIn= data.frame(VesDate=tmp$VesDate,site=tmp$site)
- #  VesIn=unique(VesIn)
-   
- # ctchIN=left_join(VesIn,ctch,by="VesDate")
- # ctchIN=ctchIN[is.na(ctchIN$site)==F,]
- # ctchIN %>% group_by(site)  %>%  summarise (catch=sum (catch_volume))
- 
- 
- 
- 
- 
+    
   
+ # siteFlt=  c("KEKURNY CAPE","SHIPUNSKY CAPE","ZHELEZNAYA BAY","KOZLOV CAPE")
+ #  siteFlt=  c("CHIRINKOTAN","MATUA/POLOGY","CHIRPOY/UDUSHLIVY","ANTSIFEROV/ROOKERY","SHIASHKOTAN/KRASNY","SIMUSHIR/KRASNOVATAYA","BRAT CHIRPOYEV/ROOKERY","ONEKOTAN/KAMEN YASNOY POGODY","RAYKOKE","SIMUSHIR/ARONT","URUP/CHAYKA")
+#  siteFlt=  c("ZAVYALOV","YAMSKY ISLS","IONY")
+  siteFlt=  c("ARAGINSKY/KRASHENINNIKOV")
+   
+  #  fish=c("минтай","камбала","терпуги","треска","бычки") # kamchatka
+	#   fish=c("минтай","терпуги","кальмары прочие") # kurill
+	# fish=c("минтай","сельдь") # okhotsk
+     fish=c("минтай","камбала","треска") # Karaga
+   
+   
+  #####
+ #  tmp=data.frame(posC[posC$site %in% siteFlt,])   
+ #  tmp %>% group_by(id_ves,site)  %>% summarise(n=n()) %>% group_by(site)%>%summarise(n=n())  # ves per site
+ #  tmp %>% group_by(VesDate,site)  %>% summarise(n=n()) %>% group_by(site)%>%summarise(n=n())  # vesDays per site
+   
+#   VesIn= data.frame(VesDate=tmp$VesDate,site=tmp$site)
+#   VesIn=unique(VesIn)
+#  ctchIN=left_join(VesIn,ctch,by="VesDate")
+#  ctchIN=ctchIN[is.na(ctchIN$site)==F,]
+# ctchIN %>% group_by(site)  %>%  summarise (catch=sum (catch_volume))  # ctch per site
+ 
+# ctchIN %>% group_by(site,VesDate) %>% summarise(ctch=sum(catch_volume)) %>% group_by(site) %>% summarise(med=median(ctch)) # ctch per day
+# ctchIN %>% group_by(site,VesDate) %>% summarise(ctch=sum(catch_volume)) %>% group_by(site) %>% summarise(iqr=IQR(ctch)) # ctch per day IQR
+#  ctchIN %>% group_by(site,VesDate) %>% summarise(ctch=sum(catch_volume)) %>% group_by(site) %>% summarise(med=median(ctch))  # ctch per day for region
+ #####
+ 
   VesD=unique(pos$VesDate[pos$site %in% siteFlt])
   ctchF= as_tibble(ctch[ctch$Ves_Date %in% VesD,])
   ctchF$mnth=substr(ctchF$date,6,7)
   ctchF$fish[ctchF$fish=="треска ярусная"]="треска"
-   #fsh=ctchF %>% group_by(fish) %>% summarise (ctch=sum(catch_volume)) %>%arrange(desc(ctch))
-  
-  fish=c("минтай","камбала","терпуги","треска","бычки")
+   
+   fsh=ctchF %>% group_by(fish) %>% summarise (ctch=sum(catch_volume)) %>%arrange(desc(ctch))
   ctchF=ctchF[ctchF$fish %in% fish,]
   
  # codMarch=NOpolock %>% filter (mnth=="03") %>% filter (fish=="треска")
@@ -108,7 +118,7 @@ INFO=function(){
    polock=tmp[tmp$fish=="минтай",]
    NOpolock=tmp[!tmp$fish=="минтай",]
    
-    ggplot(polock, aes(x=mnth, y=ctch, fill=fish)) + 
+    ggplot(tmp, aes(x=mnth, y=ctch, fill=fish)) + 
     geom_boxplot() +
 	 theme(axis.text.x=element_text(angle = 0, hjust = 0,size=20))+ #-90
 	 xlab("Месяц")+
@@ -119,7 +129,7 @@ INFO=function(){
 			   axis.text=element_text(size=14),
 			   axis.title=element_text(size=15),
 			   legend.title=element_blank()
-			   #,legend.position="none" 
+			  # ,legend.position="bottom" 
 			   )
   ################################################################################################################################
  ctchF1=ctchF
@@ -127,7 +137,7 @@ INFO=function(){
   ctchF1$catch_depth[ctchF1$catch_depth > -5]=NA
   
   
-    OperBottom=c("снюрревод","сеть донная","трал р/гл", "трал донный","ярус донный")
+    OperBottom=c("снюрревод","сеть донная","трал р/гл", "трал донный","ярус донный","невод кошельковый")
     Bottom=ctchF1[ctchF1$oper %in% OperBottom,]  
     NOBottom=ctchF1[!ctchF1$oper %in% OperBottom,]  
    
@@ -143,11 +153,11 @@ INFO=function(){
 			   axis.title=element_text(size=15),
 			   legend.title=element_blank()
 			   
-			   #,legend.position="none" 
+			   ,legend.position="bottom" 
 			   )
    
    
-   
+   geom_smooth(aes(x=as.integer(group),y=variable,color=treatment,fill=treatment),method=loess)
 
 }
 
@@ -582,8 +592,13 @@ map=function(){
   
  
   
-  siteFlt=  c("KEKURNY CAPE","SHIPUNSKY CAPE","ZHELEZNAYA BAY","KOZLOV CAPE")
-  
+  #siteFlt=  c("KEKURNY CAPE","SHIPUNSKY CAPE","ZHELEZNAYA BAY","KOZLOV CAPE")
+#   siteFlt=  c("CHIRINKOTAN","MATUA/POLOGY","CHIRPOY/UDUSHLIVY","ANTSIFEROV/ROOKERY","SHIASHKOTAN/KRASNY","SIMUSHIR/KRASNOVATAYA","BRAT CHIRPOYEV/ROOKERY","ONEKOTAN/KAMEN YASNOY POGODY","RAYKOKE","SIMUSHIR/ARONT","URUP/CHAYKA")
+ #  siteFlt=  c("ZAVYALOV","YAMSKY ISLS","IONY")
+   siteFlt=  c("ARAGINSKY/KRASHENINNIKOV")
+   
+   
+   
   Pos$time=substr(Pos$datetime,11,20)
   Pos$time=as.POSIXct(strptime(Pos$time, format="%H:%M:%S"))
   TIMEVECTOR= c("12:00:00","00:00:00","00:01:00","23:59:00")
@@ -643,7 +658,6 @@ saveRDS(siteALL,"siteALL")
 
 
 #  PointsCatch =readRDS("PointsCatch_ALL"); PointsCatch=st_as_sf(PointsCatch)#, coords = c("declong", "declat"), crs = 4326) %>% st_transform(3857)
-  
   #########
 #reg=as_Spatial(reg)
 #reg=spTransform(reg,crs)
@@ -728,17 +742,17 @@ saveRDS(siteALL,"siteALL")
  # bbox = c(left = 140,  right =166 ,bottom =40, top =63) #legend
  # bbox = c(left = 141,  right =164 ,bottom =42, top =61) #KURILLY SIMUSHIR
   # bbox = c(left = 154.2,  right =157.2 ,bottom =49.24, top =50.9) #ONEKOTAN, ANZIFER
- #  bbox = c(left = 161,  right =165 ,bottom =57.5, top =59.5) #KARAGINSKY
-   bbox = c(left = 157,  right =163.8 ,bottom =51, top =55.3) #KAMCHATKA
+ 
   #  bbox = c(left = 160,  right =162 ,bottom =54, top =55) #KOZLOVA
   #  bbox = c(left = 149.8,  right =153 ,bottom =45.5, top =47.6) #SIMUSHIR
 #	 bbox = c(left = 152.5,  right =154 ,bottom =47.5, top =48.5) # MATUA
   
+  
+#  bbox = c(left = 157,  right =163.8 ,bottom =51, top =55.3) #KAMCHATKA
+ # bbox = c(left = 149,  right =157 ,bottom =45, top =51.5) #KURILL
 
-
-
-
-
+ #  bbox = c(left = 142,  right =156 ,bottom =54, top =60) #okhotsk
+  bbox = c(left = 161,  right =165 ,bottom =57.5, top =59.5) #KARAGINSKY
 
 
 bsm=          basemap(limits = bbox,bathymetry = T,rotate=T,land.col = "#eeeac4", bathy.style = "poly_greys", lon.interval =5,grid.col = NA)+ # land.border.col = NA
@@ -749,7 +763,7 @@ bsm=          basemap(limits = bbox,bathymetry = T,rotate=T,land.col = "#eeeac4"
 			   legend.title=element_blank()
 			   ,legend.position="none" 
 			   )
-
+bsm
  #bsm+annotation_spatial(data = siteALL,inherit.aes = F,size=4,pch=1)
 			   
 			   
@@ -759,9 +773,9 @@ bsm=          basemap(limits = bbox,bathymetry = T,rotate=T,land.col = "#eeeac4"
 
  p=    bsm +
        annotation_scale(location = "br") + 
-       annotation_north_arrow(location = "tr", which_north = "true") +
-	    annotation_spatial(data = KZ,inherit.aes = F,size=1,color="chartreuse1")+
-	#   annotation_spatial(data = OUT,inherit.aes = F,alpha=0.01,size=0.00005, color = "red")+ 
+       annotation_north_arrow(location = "tr", which_north = "true") +  #
+	  #  annotation_spatial(data = KZ,inherit.aes = F,size=1,color="gray25")+
+	   annotation_spatial(data = OUT,inherit.aes = F,alpha=0.01,size=0.00005, color = "red")+ 
 	   annotation_spatial(data = IN,inherit.aes = F,alpha=0.01, size=0.00005,color = "blue")+
 	   annotation_spatial(data = siteALL,inherit.aes = F,size=4,pch=1)+
 	   annotation_spatial(data = sites,inherit.aes = F,size=4,pch=13)+ #
@@ -772,12 +786,13 @@ bsm=          basemap(limits = bbox,bathymetry = T,rotate=T,land.col = "#eeeac4"
 		
 		
 	  
-      p$layers[11]=p$layers[2] # land over 
-	  p$layers[12]=p$layers[3] # scale over
-	  p$layers[13]=p$layers[4] # north over
+      p$layers[10]=p$layers[2] # land over 
+	  p$layers[11]=p$layers[3] # scale over
+	  p$layers[12]=p$layers[4] # north over
 	  
-	   p$layers[14]=p$layers[8] # sites over
-	   p$layers[15]=p$layers[9] # sites over
+	  p$layers[13]=p$layers[7] # sites over
+	  p$layers[14]=p$layers[8] # sites over
+
 	  
 	  
 
