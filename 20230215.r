@@ -74,46 +74,63 @@ INFO=function(){
   Ctchves=unique(ctch$ves)
   posC= pos [pos$id_ves %in% Ctchves,]
  
-    
+   ctch$mnth=substr(ctch$date,6,7)
+   ctch$season[ctch$mnth %in% c("06","07","08")]="summer"
+   ctch$season[!ctch$mnth %in% c("06","07","08")]="winter"
+   ctch=as_tibble(ctch)
   
- # siteFlt=  c("KEKURNY CAPE","SHIPUNSKY CAPE","ZHELEZNAYA BAY","KOZLOV CAPE")
+#  siteFlt=  c("KEKURNY CAPE","SHIPUNSKY CAPE","ZHELEZNAYA BAY","KOZLOV CAPE")
  #  siteFlt=  c("CHIRINKOTAN","MATUA/POLOGY","CHIRPOY/UDUSHLIVY","ANTSIFEROV/ROOKERY","SHIASHKOTAN/KRASNY","SIMUSHIR/KRASNOVATAYA","BRAT CHIRPOYEV/ROOKERY","ONEKOTAN/KAMEN YASNOY POGODY","RAYKOKE","SIMUSHIR/ARONT","URUP/CHAYKA")
 #  siteFlt=  c("ZAVYALOV","YAMSKY ISLS","IONY")
-  siteFlt=  c("ARAGINSKY/KRASHENINNIKOV")
+ # siteFlt=  c("ARAGINSKY/KRASHENINNIKOV")
+    siteFlt=  c("CHIRINKOTAN","MATUA/POLOGY","CHIRPOY/UDUSHLIVY","ANTSIFEROV/ROOKERY","SHIASHKOTAN/KRASNY","SIMUSHIR/KRASNOVATAYA","BRAT CHIRPOYEV/ROOKERY","ONEKOTAN/KAMEN YASNOY POGODY","RAYKOKE","SIMUSHIR/ARONT","URUP/CHAYKA","KEKURNY CAPE","SHIPUNSKY CAPE","ZHELEZNAYA BAY","KOZLOV CAPE","ZAVYALOV","YAMSKY ISLS","IONY","ARAGINSKY/KRASHENINNIKOV")
    
-  #  fish=c("минтай","камбала","терпуги","треска","бычки") # kamchatka
-	#   fish=c("минтай","терпуги","кальмары прочие") # kurill
-	# fish=c("минтай","сельдь") # okhotsk
-     fish=c("минтай","камбала","треска") # Karaga
-   
-   
-  #####
- #  tmp=data.frame(posC[posC$site %in% siteFlt,])   
+ #  fish=c("минтай","камбала","терпуги","треска","бычки") # kamchatka
+#	   fish=c("минтай","терпуги","кальмары прочие") # kurill
+#	 fish=c("минтай","сельдь") # okhotsk
+ #    fish=c("минтай","камбала","треска") # Karaga
+   fish=c("минтай","камбала","терпуги","треска","бычки","кальмары прочие","сельдь")
+  ###################################################################################################### 
+  #####       table  Quantitative assessment of commercial fisheries in the water areas of rookeries.
+   tmp=data.frame(posC[posC$site %in% siteFlt,])   
  #  tmp %>% group_by(id_ves,site)  %>% summarise(n=n()) %>% group_by(site)%>%summarise(n=n())  # ves per site
  #  tmp %>% group_by(VesDate,site)  %>% summarise(n=n()) %>% group_by(site)%>%summarise(n=n())  # vesDays per site
    
-#   VesIn= data.frame(VesDate=tmp$VesDate,site=tmp$site)
-#   VesIn=unique(VesIn)
-#  ctchIN=left_join(VesIn,ctch,by="VesDate")
-#  ctchIN=ctchIN[is.na(ctchIN$site)==F,]
-# ctchIN %>% group_by(site)  %>%  summarise (catch=sum (catch_volume))  # ctch per site
+   VesIn= data.frame(VesDate=tmp$VesDate,site=tmp$site)
+   VesIn=unique(VesIn)
+  ctchIN=left_join(VesIn,ctch,by="VesDate")
+  ctchIN= as_tibble(ctchIN[is.na(ctchIN$site)==F,])
+   
+  #ctchIN %>% group_by(site)  %>%  summarise (catch=sum (catch_volume))  # ctch per site
+  
+
+ ctchIN %>% group_by(site,VesDate) %>% summarise(ctch=sum(catch_volume)) %>% group_by(site) %>% summarise(med=median(ctch)) # ctch per day
+ ctchIN %>% group_by(site,VesDate) %>% summarise(ctch=sum(catch_volume)) %>% group_by(site) %>% summarise(iqr=IQR(ctch)) # ctch per day IQR
+ ctchIN %>% group_by(site,VesDate) %>% summarise(ctch=sum(catch_volume)) %>% group_by(site) %>% summarise(med=median(ctch))  # ctch per day for region
+  
  
-# ctchIN %>% group_by(site,VesDate) %>% summarise(ctch=sum(catch_volume)) %>% group_by(site) %>% summarise(med=median(ctch)) # ctch per day
-# ctchIN %>% group_by(site,VesDate) %>% summarise(ctch=sum(catch_volume)) %>% group_by(site) %>% summarise(iqr=IQR(ctch)) # ctch per day IQR
-#  ctchIN %>% group_by(site,VesDate) %>% summarise(ctch=sum(catch_volume)) %>% group_by(site) %>% summarise(med=median(ctch))  # ctch per day for region
+
  #####
- 
   VesD=unique(pos$VesDate[pos$site %in% siteFlt])
   ctchF= as_tibble(ctch[ctch$Ves_Date %in% VesD,])
-  ctchF$mnth=substr(ctchF$date,6,7)
   ctchF$fish[ctchF$fish=="треска ярусная"]="треска"
-   
    fsh=ctchF %>% group_by(fish) %>% summarise (ctch=sum(catch_volume)) %>%arrange(desc(ctch))
-  ctchF=ctchF[ctchF$fish %in% fish,]
+   ctchRg=ctchF[ctchF$fish %in% fish,]
   
- # codMarch=NOpolock %>% filter (mnth=="03") %>% filter (fish=="треска")
+ 
   ##########################################
-  tmp=ctchF %>% group_by(fish,mnth,year) %>% summarise (ctch=sum(catch_volume)) %>%arrange(desc(ctch))
+  tmp=ctchRg %>% group_by(mnth,year,season) %>% summarise (ctch=sum(catch_volume)) %>%arrange(desc(ctch))
+ ####################################info
+
+ median(tmp$ctch[tmp$season=="summer" & tmp$fish=="минтай"]);IQR(tmp$ctch[tmp$season=="summer" & tmp$fish=="минтай"])
+ median(tmp$ctch[tmp$season=="winter" & tmp$fish =="минтай"]);IQR(tmp$ctch[tmp$season =="winter" & tmp$fish =="минтай"])
+ 
+ 
+ median(tmp$ctch[tmp$season=="summer" & tmp$fish !="минтай"]);IQR(tmp$ctch[tmp$season=="summer" & tmp$fish !="минтай"])
+ median(tmp$ctch[tmp$season=="winter" & tmp$fish !="минтай"]);IQR(tmp$ctch[tmp$season =="winter" & tmp$fish !="минтай"])
+ 
+ 
+ #############################################################
  
    polock=tmp[tmp$fish=="минтай",]
    NOpolock=tmp[!tmp$fish=="минтай",]
@@ -129,17 +146,59 @@ INFO=function(){
 			   axis.text=element_text(size=14),
 			   axis.title=element_text(size=15),
 			   legend.title=element_blank()
-			  # ,legend.position="bottom" 
+			  ,legend.position="bottom" 
 			   )
   ################################################################################################################################
- ctchF1=ctchF
+ctchALL=ctchIN
+ ctchALL$reg[ctchALL$site %in% c("KEKURNY CAPE","SHIPUNSKY CAPE","ZHELEZNAYA BAY","KOZLOV CAPE")]="KK"
+  ctchALL$reg[ctchALL$site %in% c("ZAVYALOV","YAMSKY ISLS","IONY")]="OKH"
+  ctchALL$reg[ctchALL$site %in% c("ARAGINSKY/KRASHENINNIKOV")]="KRG"
+   ctchALL$reg[ctchALL$site %in%c("CHIRINKOTAN","MATUA/POLOGY","CHIRPOY/UDUSHLIVY","ANTSIFEROV/ROOKERY","SHIASHKOTAN/KRASNY","SIMUSHIR/KRASNOVATAYA","BRAT CHIRPOYEV/ROOKERY","ONEKOTAN/KAMEN YASNOY POGODY","RAYKOKE","SIMUSHIR/ARONT","URUP/CHAYKA")]="KUR"
+ 
+ ctchALL$catch_depth=0-ctchALL$catch_depth
+  ctchALL$catch_depth[ctchALL$catch_depth > -5]=NA
+    OperBottom=c("снюрревод","сеть донная","трал р/гл", "трал донный","ярус донный","невод кошельковый")
+    Bottom=ctchALL %>% filter (oper %in% OperBottom) 
+
+
+    ggplot(Bottom, aes(x=season, y=catch_depth,fill=reg)) + 
+    geom_boxplot(outlier.size=0.011) +
+	 theme(axis.text.x=element_text(angle = 0, hjust = 0,size=20))+ #
+	 xlab("Месяц")+
+	 ylab("Глубина лова, метров")+
+	 scale_y_continuous(limits=c(-600,0), breaks=seq(-600,0, by = 100))+
+	  theme(legend.key.size = unit(2, "cm"),
+			   legend.text = element_text(size = 15),
+			   axis.text=element_text(size=14),
+			   axis.title=element_text(size=15),
+			   legend.title=element_blank()
+			   
+			   ,legend.position="bottom" 
+			   )
+   
+   
+ #####################
+ 
+ ctchF1=ctchRg
  ctchF1$catch_depth=0-ctchF1$catch_depth
   ctchF1$catch_depth[ctchF1$catch_depth > -5]=NA
-  
-  
     OperBottom=c("снюрревод","сеть донная","трал р/гл", "трал донный","ярус донный","невод кошельковый")
-    Bottom=ctchF1[ctchF1$oper %in% OperBottom,]  
-    NOBottom=ctchF1[!ctchF1$oper %in% OperBottom,]  
+    Bottom=ctchF1 %>% filter (oper %in% OperBottom) 
+	
+   ############info
+   kruskal.test(catch_depth~season, data=Bottom)
+    boxplot (catch_depth~season, data=Bottom)
+   boxplot (catch_depth~season, data=Bottom,plot=F)
+
+
+	summerBottom= Bottom[Bottom$season=="summer",]
+	NOsummerBottom= Bottom[!Bottom$season=="summer",]
+	
+    median(summerBottom$catch_depth, na.rm=T);IQR(summerBottom$catch_depth, na.rm=T)
+    median(NOsummerBottom$catch_depth, na.rm=T);IQR(NOsummerBottom$catch_depth, na.rm=T)
+
+  
+   
    
     ggplot(Bottom, aes(x=mnth, y=catch_depth, fill=fish)) + 
     geom_boxplot(outlier.size=0.011) +
@@ -168,9 +227,6 @@ ctchMore1= ctchF %>% group_by(Ves_Date)  %>% summarise(ctch=sum(catch_volume)) %
 write.csv(ctchMore1,"ctchMore1.csv", row.names=F)
 
 
-
-
-
 pos=read.csv("tblsIN/pos_2000_2010.csv")
 
 ctch=read.csv("tblsIN/catch_2000_2010_fishSqu.csv")
@@ -197,6 +253,59 @@ ctch=read.csv("tblsIN/catch_2000_2010_fishSqu.csv")
                                     proj4string =  crs)
 	 site =spTransform(Points,crs) 
      saveRDS(site,"site")
+	 
+	 #####
+	 
+	DVCS=read.csv("tblsIN/DayVesCatchSite.csv")
+	DVCS$Catch= DVCS$Catch/1000
+	 
+	 
+	####		   
+	ggplot(DVCS, aes(x=region , y=VesDayCount)) + 
+    geom_boxplot() +
+	 theme(axis.text.x=element_text(angle = 0, hjust = 0,size=20))+ #-90
+	 xlab("Регион")+
+	 ylab("Число судосуток")+
+	# scale_y_continuous(limits=c(0,4200), breaks=seq(0,4200, by = 300))+
+	  theme(legend.key.size = unit(2, "cm"),
+			   legend.text = element_text(size = 15),
+			   axis.text=element_text(size=14),
+			   axis.title=element_text(size=15),
+			   legend.title=element_blank()
+			  ,legend.position="bottom" 
+			   )   
+	############# 		   
+
+	 #######################
+	 	ggplot(DVCS, aes(x=region , y=Catch)) + 
+    geom_boxplot() +
+	 theme(axis.text.x=element_text(angle = 0, hjust = 0,size=20))+ #-90
+	 xlab("Регион")+
+	 ylab("Вылов на лежбище, тысяч тонн")+
+	# scale_y_continuous(limits=c(0,4200), breaks=seq(0,4200, by = 300))+
+	  theme(legend.key.size = unit(2, "cm"),
+			   legend.text = element_text(size = 15),
+			   axis.text=element_text(size=14),
+			   axis.title=element_text(size=15),
+			   legend.title=element_blank()
+			  ,legend.position="bottom" 
+			   )   
+			   ##########
+			   	ggplot(DVCS, aes(x=region , y=CatchPerDayVes)) + 
+    geom_boxplot() +
+	 theme(axis.text.x=element_text(angle = 0, hjust = 0,size=20))+ #-90
+	 xlab("Регион")+
+	 ylab("Вылов на судосутки, тонн")+
+	# scale_y_continuous(limits=c(0,4200), breaks=seq(0,4200, by = 300))+
+	  theme(legend.key.size = unit(2, "cm"),
+			   legend.text = element_text(size = 15),
+			   axis.text=element_text(size=14),
+			   axis.title=element_text(size=15),
+			   legend.title=element_blank()
+			  ,legend.position="bottom" 
+			   )   
+
+	 
 
 }
 
