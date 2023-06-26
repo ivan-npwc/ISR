@@ -79,20 +79,22 @@ INFO=function(){
    ctch$season[!ctch$mnth %in% c("06","07","08")]="winter"
    ctch=as_tibble(ctch)
   
-#  siteFlt=  c("KEKURNY CAPE","SHIPUNSKY CAPE","ZHELEZNAYA BAY","KOZLOV CAPE")
- #  siteFlt=  c("CHIRINKOTAN","MATUA/POLOGY","CHIRPOY/UDUSHLIVY","ANTSIFEROV/ROOKERY","SHIASHKOTAN/KRASNY","SIMUSHIR/KRASNOVATAYA","BRAT CHIRPOYEV/ROOKERY","ONEKOTAN/KAMEN YASNOY POGODY","RAYKOKE","SIMUSHIR/ARONT","URUP/CHAYKA")
-#  siteFlt=  c("ZAVYALOV","YAMSKY ISLS","IONY")
- # siteFlt=  c("ARAGINSKY/KRASHENINNIKOV")
-    siteFlt=  c("CHIRINKOTAN","MATUA/POLOGY","CHIRPOY/UDUSHLIVY","ANTSIFEROV/ROOKERY","SHIASHKOTAN/KRASNY","SIMUSHIR/KRASNOVATAYA","BRAT CHIRPOYEV/ROOKERY","ONEKOTAN/KAMEN YASNOY POGODY","RAYKOKE","SIMUSHIR/ARONT","URUP/CHAYKA","KEKURNY CAPE","SHIPUNSKY CAPE","ZHELEZNAYA BAY","KOZLOV CAPE","ZAVYALOV","YAMSKY ISLS","IONY","ARAGINSKY/KRASHENINNIKOV")
+ #siteFlt=  c("KEKURNY CAPE","SHIPUNSKY CAPE","ZHELEZNAYA BAY","KOZLOV CAPE")
+#  siteFlt=  c("CHIRINKOTAN","MATUA/POLOGY","CHIRPOY/UDUSHLIVY","ANTSIFEROV/ROOKERY","SHIASHKOTAN/KRASNY","SIMUSHIR/KRASNOVATAYA","BRAT CHIRPOYEV/ROOKERY","ONEKOTAN/KAMEN YASNOY POGODY","RAYKOKE","SIMUSHIR/ARONT","URUP/CHAYKA")
+ # siteFlt=  c("ZAVYALOV","YAMSKY ISLS","IONY")
+  siteFlt=  c("ARAGINSKY/KRASHENINNIKOV")
+#    siteFlt=  c("CHIRINKOTAN","MATUA/POLOGY","CHIRPOY/UDUSHLIVY","ANTSIFEROV/ROOKERY","SHIASHKOTAN/KRASNY","SIMUSHIR/KRASNOVATAYA","BRAT CHIRPOYEV/ROOKERY","ONEKOTAN/KAMEN YASNOY POGODY","RAYKOKE","SIMUSHIR/ARONT","URUP/CHAYKA","KEKURNY CAPE","SHIPUNSKY CAPE","ZHELEZNAYA BAY","KOZLOV CAPE","ZAVYALOV","YAMSKY ISLS","IONY","ARAGINSKY/KRASHENINNIKOV")
    
- #  fish=c("минтай","камбала","терпуги","треска","бычки") # kamchatka
+#  fish=c("минтай","камбала","терпуги","треска","бычки") # kamchatka
 #	   fish=c("минтай","терпуги","кальмары прочие") # kurill
 #	 fish=c("минтай","сельдь") # okhotsk
- #    fish=c("минтай","камбала","треска") # Karaga
-   fish=c("минтай","камбала","терпуги","треска","бычки","кальмары прочие","сельдь")
+     fish=c("минтай","камбала","треска") # Karaga
+#   fish=c("минтай","камбала","терпуги","треска","бычки","кальмары прочие","сельдь")# ALL
   ###################################################################################################### 
   #####       table  Quantitative assessment of commercial fisheries in the water areas of rookeries.
-   tmp=data.frame(posC[posC$site %in% siteFlt,])   
+  tmp=data.frame(posC[posC$site %in% siteFlt,])  
+
+ #  tmp=posC
  #  tmp %>% group_by(id_ves,site)  %>% summarise(n=n()) %>% group_by(site)%>%summarise(n=n())  # ves per site
  #  tmp %>% group_by(VesDate,site)  %>% summarise(n=n()) %>% group_by(site)%>%summarise(n=n())  # vesDays per site
    
@@ -104,10 +106,12 @@ INFO=function(){
   #ctchIN %>% group_by(site)  %>%  summarise (catch=sum (catch_volume))  # ctch per site
   
 
- ctchIN %>% group_by(site,VesDate) %>% summarise(ctch=sum(catch_volume)) %>% group_by(site) %>% summarise(med=median(ctch)) # ctch per day
- ctchIN %>% group_by(site,VesDate) %>% summarise(ctch=sum(catch_volume)) %>% group_by(site) %>% summarise(iqr=IQR(ctch)) # ctch per day IQR
- ctchIN %>% group_by(site,VesDate) %>% summarise(ctch=sum(catch_volume)) %>% group_by(site) %>% summarise(med=median(ctch))  # ctch per day for region
-  
+ ctchIN %>% group_by(site,VesDate) %>% summarise(ctch=sum(catch_volume)) %>% group_by(site) %>% summarise(med=median(ctch),qo25=quantile(ctch,0.25),qo75=quantile(ctch,0.75))  %>%
+  group_by()%>%
+ summarise(Me=median(med),qo25=median(qo25), qo75=median(qo75))
+ 
+ 
+
  
 
  #####
@@ -119,17 +123,17 @@ INFO=function(){
   
  
   ##########################################
-  tmp=ctchRg %>% group_by(mnth,year,season) %>% summarise (ctch=sum(catch_volume)) %>%arrange(desc(ctch))
+  tmp=ctchRg %>% group_by(mnth,year,season,fish) %>% summarise (ctch=sum(catch_volume)) %>%arrange(desc(ctch))
  ####################################info
+ 
+ tmp %>% filter(mnth   %in% c("06")) %>%
+         group_by(mnth,year) %>% 
+		 summarise(ctch=sum(ctch))  %>% 
+		   group_by() %>% 
+		 summarise(Me=median(ctch), q025=quantile(ctch,0.25),q075=quantile(ctch,0.75))
+ 
 
- median(tmp$ctch[tmp$season=="summer" & tmp$fish=="минтай"]);IQR(tmp$ctch[tmp$season=="summer" & tmp$fish=="минтай"])
- median(tmp$ctch[tmp$season=="winter" & tmp$fish =="минтай"]);IQR(tmp$ctch[tmp$season =="winter" & tmp$fish =="минтай"])
- 
- 
- median(tmp$ctch[tmp$season=="summer" & tmp$fish !="минтай"]);IQR(tmp$ctch[tmp$season=="summer" & tmp$fish !="минтай"])
- median(tmp$ctch[tmp$season=="winter" & tmp$fish !="минтай"]);IQR(tmp$ctch[tmp$season =="winter" & tmp$fish !="минтай"])
- 
- 
+
  #############################################################
  
    polock=tmp[tmp$fish=="минтай",]
@@ -191,14 +195,16 @@ ctchALL=ctchIN
    boxplot (catch_depth~season, data=Bottom,plot=F)
 
 
-	summerBottom= Bottom[Bottom$season=="summer",]
-	NOsummerBottom= Bottom[!Bottom$season=="summer",]
-	
-    median(summerBottom$catch_depth, na.rm=T);IQR(summerBottom$catch_depth, na.rm=T)
-    median(NOsummerBottom$catch_depth, na.rm=T);IQR(NOsummerBottom$catch_depth, na.rm=T)
+  Bottom %>% filter (mnth %in% c("06","07","08")) %>%
+             group_by()%>%
+			 summarise(Me=median(catch_depth,na.rm=T),Q025=quantile(catch_depth,  na.rm=T,0.25),Q075=quantile(catch_depth,  na.rm=T,0.75))
 
-  
-   
+
+
+
+
+
+ 
    
     ggplot(Bottom, aes(x=mnth, y=catch_depth, fill=fish)) + 
     geom_boxplot(outlier.size=0.011) +
@@ -695,19 +701,79 @@ map=function(){
   circles=readRDS("circles")
   sites=readRDS("sites")
   KZ=readRDS("BoarderKZ");KZ=st_transform(KZ, crs)
-  Pos=readRDS("Pos20WithDublicate")
+ # Pos=readRDS("Pos20WithDublicate")
+ 
+  
   siteALL=readRDS("siteALL")
   siteALL=siteALL[siteALL$Area %in% sites$Area,]
   
- 
+   crcls=st_as_sf(circles)
   
   #siteFlt=  c("KEKURNY CAPE","SHIPUNSKY CAPE","ZHELEZNAYA BAY","KOZLOV CAPE")
 #   siteFlt=  c("CHIRINKOTAN","MATUA/POLOGY","CHIRPOY/UDUSHLIVY","ANTSIFEROV/ROOKERY","SHIASHKOTAN/KRASNY","SIMUSHIR/KRASNOVATAYA","BRAT CHIRPOYEV/ROOKERY","ONEKOTAN/KAMEN YASNOY POGODY","RAYKOKE","SIMUSHIR/ARONT","URUP/CHAYKA")
  #  siteFlt=  c("ZAVYALOV","YAMSKY ISLS","IONY")
-   siteFlt=  c("ARAGINSKY/KRASHENINNIKOV")
+  # siteFlt=  c("ARAGINSKY/KRASHENINNIKOV")
+   GeneralMap=function(){
+    
+  pos=read.csv("tblsIN/pos_2000_2010.csv")
+  index=sample(1:length(pos[,1]))
+  ps=pos[index,][1:1000000,]
+  
+    ps$LatTest=nchar(substr(ps$latitude,4,7))
+    ps$LonTest=nchar(substr(ps$longitude,5,8))
+    ps=ps %>% filter (LatTest !=0) %>% filter (LonTest !=0)
+  
+  
+  ps1=ps[is.na(ps$latitude)==F,]
+  ps2=st_as_sf(ps1, coords = c("longitude","latitude"), crs = 4326) %>% st_transform(crs)
+   
+  
+
+    bbox = c(left = 140,  right =166 ,bottom =40, top =63) #legend
+   
+   bsm=          basemap(limits = bbox,bathymetry = T,rotate=T,land.col = "#eeeac4", bathy.style = "poly_greys", lon.interval =5,grid.col = NA)+ # land.border.col = NA
+               theme(legend.key.size = unit(2, "cm"),
+			   legend.text = element_text(size = 15),
+			   axis.text=element_text(size=14),
+			   axis.title=element_text(size=15),
+			   legend.title=element_blank()
+			   ,legend.position="none" 
+			   )
+    bsm
    
    
    
+   
+   		   
+
+ p=    bsm +
+       annotation_scale(location = "br") + 
+       annotation_north_arrow(location = "tr", pad_x=unit(4.5, "cm"),pad_y=unit(13.5, "cm")) +  #which_north = "true",
+
+	   annotation_spatial(data = ps2,inherit.aes = F,alpha=0.01,size=0.00005, color = "red")+ 
+	#   annotation_spatial(data = sites,inherit.aes = F,size=4,pch=13)+ #
+	   annotation_spatial(data = crcls,inherit.aes = F,alpha=0.00001, size=1,color = "green")+
+        xlab("Долгота")+ ylab("Широта")	
+		
+		p
+		
+		
+	  
+      p$layers[7]=p$layers[2] # land over 
+	  p$layers[8]=p$layers[3] # scale over
+	  p$layers[9]=p$layers[4] # north over
+	
+   
+    p
+   
+   
+   
+   
+   }
+    
+   
+   
+   subINOUT=function(){
   Pos$time=substr(Pos$datetime,11,20)
   Pos$time=as.POSIXct(strptime(Pos$time, format="%H:%M:%S"))
   TIMEVECTOR= c("12:00:00","00:00:00","00:01:00","23:59:00")
@@ -726,8 +792,8 @@ map=function(){
    
    IN=st_as_sf(IN, coords = c("lon","lat"), crs = 4326) %>% st_transform(crs)
    OUT=st_as_sf(OUT, coords = c("lon","lat"), crs = 4326) %>% st_transform(crs)
+   }
    
-   crcls=st_as_sf(circles)
   
   
 
